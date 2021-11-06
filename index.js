@@ -22,7 +22,7 @@ async function run() {
       const date = req.query.date;
 
       const query = { email: email, date: date }
-      console.log(query);
+      // console.log(query);
 
       const cursor = appointmentsCollection.find(query);
       // const cursor = appointmentsCollection.find({});
