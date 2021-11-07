@@ -4,13 +4,13 @@ const { MongoClient } = require('mongodb');
 const admin = require("firebase-admin");
 require('dotenv').config()
 const app = express()
-const port = process.env.PORT || 5000
+const port = process.env.PORT || 5000;
+const nodemailer = require("nodemailer");
 
 app.use(cors())
 app.use(express.json());
 
 const serviceAccount = require('./doctor-portal-k17h02.json');
-
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -31,6 +31,28 @@ async function verifyToken(req, res, next) {
 
   }
   next();
+}
+// node mailer 
+async function main(details) {
+  let transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
+    },
+  });
+  let info = await transporter.sendMail({
+    from: details.email,
+    to: "k17h02@gmail.com",
+    subject: details.subject,
+    text: details.message,
+    html: details.message,
+  });
+  // console.log("Message sent: %s", info.messageId);
+  // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+
 }
 async function run() {
   try {
@@ -63,6 +85,15 @@ async function run() {
       const result = await usersCollection.insertOne(user);
       console.log(result);
       res.json(result);
+    });
+    app.post('/messages', async (req, res) => {
+      const message = req.body;
+
+      main(message).catch(console.error);
+
+      // const result = await usersCollection.insertOne(user);
+      // console.log(result);
+      res.json("result");
     });
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
@@ -117,3 +148,8 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Doctor portals listening at http://localhost:${port}`)
 })
+
+
+
+
+// main().catch(console.error);
