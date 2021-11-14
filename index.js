@@ -6,11 +6,13 @@ require('dotenv').config()
 const app = express()
 const port = process.env.PORT || 5000;
 const nodemailer = require("nodemailer");
-
+const ObjectId = require('mongodb').ObjectId;
+const stripe = require('stripe')(process.env.STRIPE_SECRET)
 app.use(cors())
 app.use(express.json());
 
 const serviceAccount = require('./doctor-portal-k17h02.json');
+// JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -73,7 +75,12 @@ async function run() {
       const appointments = await cursor.toArray();
       res.json(appointments);
     })
-
+    app.get('/appointments/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await appointmentsCollection.findOne(query);
+      res.json(result);
+  })
     app.post('/appointments', async (req, res) => {
       const appointment = req.body;
       const result = await appointmentsCollection.insertOne(appointment);
@@ -132,8 +139,33 @@ async function run() {
       }
 
     })
+    app.put('/appointments/:id', async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+          $set: {
+              payment: payment
+          }
+      };
+      const result = await appointmentsCollection.updateOne(filter, updateDoc);
+      res.json(result);
+  })
+    
 
-  }
+    app.post('/create-payment-intent', async (req, res) => {
+      const paymentInfo = req.body;
+      const amount = paymentInfo.price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+          currency: 'usd',
+          amount: amount,
+          payment_method_types: ['card']
+      });
+      res.json({ clientSecret: paymentIntent.client_secret })
+  })
+
+}
+  
   finally {
     // await client.close();
   }
