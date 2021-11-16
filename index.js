@@ -14,7 +14,7 @@ const fileUpload = require('express-fileupload');
 app.use(fileUpload());
 
 const serviceAccount = require('./doctor-portal-k17h02.json');
-// JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
 });
@@ -36,31 +36,11 @@ async function verifyToken(req, res, next) {
   }
   next();
 }
-// node mailer 
-async function main(details) {
-  let transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASS,
-    },
-  });
-  let info = await transporter.sendMail({
-    from: details.email,
-    to: "k17h02@gmail.com",
-    subject: details.subject,
-    text: details.message,
-    html: details.message,
-  });
-  // console.log("Message sent: %s", info.messageId);
-  // console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
 
-}
 async function run() {
   try {
     await client.connect();
+    console.log("conneted")
     const database = client.db('doctors_portal');
     const appointmentsCollection = database.collection('appointments');
     const usersCollection = database.collection('users');
@@ -98,11 +78,7 @@ async function run() {
     });
     app.post('/messages', async (req, res) => {
       const message = req.body;
-
       main(message).catch(console.error);
-
-      // const result = await usersCollection.insertOne(user);
-      // console.log(result);
       res.json("result");
     });
     app.get('/users/:email', async (req, res) => {
@@ -157,21 +133,20 @@ async function run() {
     // doctors api
     app.get('/doctors', async (req, res) => {
       const cursor = doctorsCollection.find({});
+      // const cursor = usersCollection.find({});
       const doctors = await cursor.toArray();
       res.json(doctors);
     });
 
-    // app.get('/doctors/:id', async (req, res) => {
-    //   const query = { _id: ObjectId(req.params.id) }
-    //   const doctor = await doctorsCollection.findOne(query);
-    //   res.json(doctor);
-    // });
+
+
 
     app.post('/doctors', async (req, res) => {
       const name = req.body.name;
       const email = req.body.email;
       const pic = req.files.image;
       const picData = pic.data;
+
       const encodedPic = picData.toString('base64');
       const imageBuffer = Buffer.from(encodedPic, 'base64');
       const doctor = {
