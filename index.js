@@ -64,6 +64,7 @@ async function run() {
     const database = client.db('doctors_portal');
     const appointmentsCollection = database.collection('appointments');
     const usersCollection = database.collection('users');
+    const doctorsCollection = database.collection('doctors');
 
     app.get('/appointments', async (req, res) => {
       const email = req.query.email;
@@ -160,11 +161,11 @@ async function run() {
       res.json(doctors);
     });
 
-    app.get('/doctors/:id', async (req, res) => {
-      const query = { _id: ObjectId(req.params.id) }
-      const doctor = await doctorsCollection.findOne(query);
-      res.json(doctor);
-    });
+    // app.get('/doctors/:id', async (req, res) => {
+    //   const query = { _id: ObjectId(req.params.id) }
+    //   const doctor = await doctorsCollection.findOne(query);
+    //   res.json(doctor);
+    // });
 
     app.post('/doctors', async (req, res) => {
       const name = req.body.name;
